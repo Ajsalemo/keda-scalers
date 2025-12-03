@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: azp-auth
+data:
+  personalAccessToken: "000"
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: azp-trigger-auth
+  namespace: default
+spec:
+  secretTargetRef:
+    - parameter: personalAccessToken
+      name: azp-auth
+      key: personalAccessToken
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: azure-pipelines
+  namespace: default
+spec:
+  minReplicaCount: 0          
+  maxReplicaCount: 1 
+  jobTargetRef:
+    template:
+      spec:
+        containers:
+        - name: azure-pipelines
+          env:
+          - name: AZP_TOKEN
+            value: "000"
+          - name: AZP_URL
+            value: "https://dev.azure.com/ansalemo"
+          - name: AZP_POOL
+            value: "container-apps"
+          image: self-hosted-azure-pipelines-runner:1.0
+          imagePullPolicy: IfNotPresent
+        restartPolicy: Never
+  triggers:
+  - type: azure-pipelines
+    metadata:
+      organizationURLFromEnv: "AZP_URL"
+      personalAccessTokenFromEnv: "AZP_TOKEN"
+      poolName: "container-apps"
+    authenticationRef:
+      name: azp-trigger-auth

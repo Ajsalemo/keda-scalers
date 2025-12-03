@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azure-pipelines
+  namespace: default
+  labels:
+    app: azure-pipelines
+spec:
+  selector:
+    matchLabels:
+      app: azure-pipelines
+  template:
+    metadata:
+      labels:
+        app: azure-pipelines
+    spec:
+      containers:
+        - name: azure-pipelines
+          env:
+          - name: AZP_TOKEN
+            value: "000"
+          - name: AZP_URL
+            value: "https://dev.azure.com/ansalemo"
+          - name: AZP_POOL
+            value: "container-apps"
+          image: self-hosted-azure-pipelines-runner:1.0
+          imagePullPolicy: IfNotPresent          
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+      restartPolicy: Always
