@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: github-auth
+data:
+  personalAccessToken: "000"
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: github-trigger-auth
+  namespace: default
+spec:
+  secretTargetRef:
+    - parameter: personalAccessToken
+      name: github-auth
+      key: personalAccessToken
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: github-runner
+spec:
+  scaleTargetRef:
+    name: runner
+  minReplicaCount: 0
+  maxReplicaCount: 2
+  triggers:
+  - type: github-runner
+    metadata:
+      ownerFromEnv: "REPO_OWNER"
+      runnerScope: "repo"
+      reposFromEnv: "REPO_NAME"
+      targetWorkflowQueueLength: "1"
+    authenticationRef:
+      name: github-trigger-auth
